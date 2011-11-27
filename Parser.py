@@ -112,6 +112,7 @@ class Parser(object):
                 if percentage > last_percentage_reported:
                     logger.info("%i%% of %s read" % (percentage, filename))
                     last_percentage_reported = percentage
+            logger.info("Done parsing file %s" % filename)
         except Exception, e:
             logger.warn(unicode(e))
         finally:
@@ -119,7 +120,14 @@ class Parser(object):
                 f.close()
 
     def valid_data(self):
-        '''Discard values for the first and last date'''
+        '''
+        Discard values for the first and last date
+
+        If limit_to_date was specified, just return results
+        '''
+        if self.limit_to_date:
+            return self.date
+
         dates = sorted(self.date.keys(), key=lambda x: x[0])
         try:
             del dates[0]
@@ -156,7 +164,7 @@ def main():
     for f in filelist:
         p.parse_file(f)
 
-    for key, value in sorted(p.date.items()):
+    for key, value in sorted(p.valid_data().iteritems()):
         print "%s %8.0f MiB %8d reqs" % (key, value[0]/1024/1024, value[1])
 
 

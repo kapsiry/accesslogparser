@@ -20,13 +20,16 @@ logger = logging.getLogger('parselogs')
 
 def main(log_dir, server_name, database_spec):
     sqlhub.processConnection = connectionForURI(database_spec)
+    yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+
     for domain in os.listdir(log_dir):
         logger.info("Parsing logs for domain " + domain)
         logfile = os.path.join(log_dir, domain, 'access.log')
-        p = Parser()
+        # p = Parser()
+        p = Parser(limit_to_date="%i-%i-%i" % (yesterday.year, yesterday.month, yesterday.day))
         p.parse_file(logfile)
         p.parse_file(logfile+'.1')
-        for date, d in p.valid_data().items():
+        for date, d in p.valid_data().iteritems():
             bytes, hits = d
             date_d = datetime.date(*[int(x) for x in date.split("-")])
             try:
