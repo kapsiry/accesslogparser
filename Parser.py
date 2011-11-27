@@ -11,6 +11,8 @@ import gzip
 from datetime import datetime
 from bz2 import BZ2File
 
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(name)s %(levelname)s %(message)s')
 logger = logging.getLogger("Parser")
 
 # 123.123.123.1 - - [15/Nov/2009:06:50:06 +0200] "GET / HTTP/1.1" 404 995 "http://www.kapsi.fi/" "USER AGENT"
@@ -49,6 +51,7 @@ class Parser(object):
     '''
     def __init__(self):
         self.date = {}
+        self.lines_read = 0
 
     def parse(self, line):
         parsed = parse_line(line)
@@ -60,10 +63,16 @@ class Parser(object):
             self.date[date][0] += int(size)
             self.date[date][1] += 1
 
+        self.lines_read += 1
+
+        if (self.lines_read % 10000) == 0:
+            logger.info("%i lines read" % self.lines_read)
+
     def parse_file(self, filename):
         f = None
         try:
             # Open (possibly compressed) log file
+            file_size = float(os.path.getsize(filename))
             logger.debug(filename)
             if filename.endswith('.gz'):
                 f = gzip.open(filename, 'r')
@@ -72,14 +81,21 @@ class Parser(object):
             else:
                 f = open(filename, 'r')
 
+            read_bytes = 0.0
+            last_percentage_reported = 0
+
             for line in f:
                 self.parse(line)
+                read_bytes += float(len(line))
+                percentage = int((read_bytes / file_size) * 100)
+                if percentage > last_percentage_reported:
+                    logger.info("%i%% of %s read" % (percentage, filename))
+                    last_percentage_reported = percentage
         except Exception, e:
             logger.warn(unicode(e))
         finally:
             if f:
                 f.close()
-
 
     def valid_data(self):
         '''Discard values for the first and last date'''
