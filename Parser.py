@@ -35,7 +35,7 @@ def parse_line(line):
 
 def date_convert(date):
     try:
-	logger.debug("date_convert: " + date)
+        logger.debug("date_convert: " + date)
         day, month, year = date.split("/")
         return "%s-%s-%s" % (year, MONTH_NUMBERS[month], day)
     except:
