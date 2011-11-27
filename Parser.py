@@ -8,7 +8,9 @@ import re
 import logging
 import gzip
 
+from datetime import timedelta
 from datetime import datetime
+
 from bz2 import BZ2File
 
 logging.basicConfig(level=logging.INFO,
@@ -48,16 +50,27 @@ class Parser(object):
     
     Parses files line by line and keeps track of the size and number of all
     requests for each day.
+
+    Takes limit_to_date as YYYY-MM-DD
     '''
-    def __init__(self):
+    def __init__(self, limit_to_date=None):
         self.date = {}
+        self.limit_to_date = limit_to_date
         self.lines_read = 0
 
     def parse(self, line):
         parsed = parse_line(line)
-        size = parsed['size']
         date = date_convert(parsed['date'])
-        if not self.date.get(date):
+
+        if self.limit_to_date and self.limit_to_date != date:
+            self.lines_read += 1
+            if (self.lines_read % 10000) == 0:
+                logger.info("%i lines read" % self.lines_read)
+            return
+
+        size = parsed['size']
+
+        if not self.date.has_key(date):
             self.date[date] = [0, 0] # bandwidth, hits
         if not size == '-':
             self.date[date][0] += int(size)
@@ -113,10 +126,25 @@ class Parser(object):
 
 
 def main():
-    filelist = sys.argv[1:]
+    from optparse import OptionParser
+
+    parser = OptionParser()
+
+    parser.add_option("-y", dest="yesterday",
+                      help="only include yesterday's log entries",
+                      action="store_true", default=False)
+
+    opts, args = parser.parse_args()
+    
+    filelist = args
     print >> sys.stderr, "# Parsing files: %s" % ', '.join(filelist)
 
-    p = Parser()
+    if opts.yesterday:
+        yesterday = datetime.now() - timedelta(days=1)
+        p = Parser(limit_to_date="%i-%i-%i" % (yesterday.year, yesterday.month, yesterday.day))
+    else:
+        p = Parser()
+
     for f in filelist:
         p.parse_file(f)
 
