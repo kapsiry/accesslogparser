@@ -7,6 +7,7 @@ import os.path
 import datetime
 import logging
 
+from os import environ as env
 from socket import gethostname
 
 from sqlobject import connectionForURI, sqlhub
@@ -18,8 +19,8 @@ logging.basicConfig(level=logging.DEBUG,
     format='%(asctime)s %(name)s %(levelname)s %(message)s')
 logger = logging.getLogger('parselogs')
 
-def main(log_dir, server_name, database_spec):
-    sqlhub.processConnection = connectionForURI(database_spec)
+def main(log_dir, server_name, db_url):
+    sqlhub.processConnection = connectionForURI(db_url)
     yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
 
     for domain in os.listdir(log_dir):
@@ -52,10 +53,9 @@ if __name__ == '__main__':
     parser.add_option("-s", "--server-name", dest="server_name",
                       help="override the canonical hostname", metavar="SERVER-NAME",
                       default=gethostname())
-    parser.add_option("-d", "--database-spec", dest="db_spec",
-                      help="database to connect to", metavar="DB-SPEC",
-                      default='sqlite:' + os.path.join(os.getcwd(), 'www.sqlite'))
+
+    db_url = env.get('DATABASE_URL', 'sqlite:' + os.path.join(os.getcwd(), 'www.sqlite'))
 
     opts, args = parser.parse_args()
-    main(opts.log_dir, opts.server_name, opts.db_spec)
+    main(opts.log_dir, opts.server_name, db_url)
 
