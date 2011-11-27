@@ -58,8 +58,14 @@ class Parser(object):
         self.limit_to_date = limit_to_date
         self.lines_read = 0
 
-    def parse(self, line):
-        parsed = parse_line(line)
+    def parse(self, line, line_num):
+        try:
+            parsed = parse_line(line)
+        except Exception, e:
+            logger.warn(unicode(e))
+            logger.warn("Cannot parse line %i: %s" % (line_num, line.replace('\n', '')))
+            return
+
         date = date_convert(parsed['date'])
 
         if self.limit_to_date and self.limit_to_date != date:
@@ -97,8 +103,10 @@ class Parser(object):
             read_bytes = 0.0
             last_percentage_reported = 0
 
+            line_num = 0
             for line in f:
-                self.parse(line)
+                self.parse(line, line_num)
+                line_num += 1
                 read_bytes += float(len(line))
                 percentage = int((read_bytes / file_size) * 100)
                 if percentage > last_percentage_reported:
