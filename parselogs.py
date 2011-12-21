@@ -27,7 +27,7 @@ def main(log_dir, server_name, db_url):
         logger.info("Parsing logs for domain " + domain)
         logfile = os.path.join(log_dir, domain, 'access.log')
         # p = Parser()
-        p = Parser(limit_to_date="%i-%i-%i" % (yesterday.year, yesterday.month, yesterday.day))
+        p = Parser(limit_to_date="%04i-%02i-%02i" % (yesterday.year, yesterday.month, yesterday.day))
         p.parse_file(logfile)
         p.parse_file(logfile+'.1')
         for date, d in p.valid_data().iteritems():

@@ -150,14 +150,22 @@ def main():
                       help="only include yesterday's log entries",
                       action="store_true", default=False)
 
+    # this is mainly for testing leading zeros in the comparison date format
+    parser.add_option("-f", dest="first_day",
+                      help="only include entries for the first of the current month",
+                      action="store_true", default=False)
+
     opts, args = parser.parse_args()
-    
+
     filelist = args
     print >> sys.stderr, "# Parsing files: %s" % ', '.join(filelist)
 
     if opts.yesterday:
         yesterday = datetime.now() - timedelta(days=1)
-        p = Parser(limit_to_date="%i-%i-%i" % (yesterday.year, yesterday.month, yesterday.day))
+        p = Parser(limit_to_date="%04i-%02i-%02i" % (yesterday.year, yesterday.month, yesterday.day))
+    elif opts.first_day:
+        today = datetime.now()
+        p = Parser(limit_to_date="%04i-%02i-%02i" % (today.year, today.month, 1))
     else:
         p = Parser()
 
