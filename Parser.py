@@ -39,7 +39,7 @@ def date_convert(date):
     try:
         logger.debug("date_convert: " + date)
         day, month, year = date.split("/")
-        return "%s-%s-%s" % (year, MONTH_NUMBERS[month], day)
+        return "%04i-%02i-%02i" % (int(year), int(MONTH_NUMBERS[month]), int(day))
     except:
         return "0000-00-00"
 
